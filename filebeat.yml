@@ -1,0 +1,17 @@
+filebeat.inputs:
+  - type: filestream
+    enabled: true
+    paths:
+      - /mnt/network_drive/*
+
+processors:
+  - add_fields:
+      target: ''
+      fields:
+        dataset: 'filesystem'
+
+# Uncomment and adjust if needed, make sure the path is correctly mounted in Docker
+# filebeat.registry.path: /var/lib/filebeat/registry
+
+output.elasticsearch:
+  hosts: ["http://elasticsearch:9200"]
