@@ -1,0 +1,46 @@
+services:
+  search_service:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.14.0
+    container_name: search_service
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+
+  visualization_service:
+    image: docker.elastic.co/kibana/kibana:8.14.0
+    container_name: visualization_service
+    environment:
+      - ELASTICSEARCH_HOSTS=http://search_service:9200
+      - xpack.security.enabled=false
+    ports:
+      - "5601:5601"
+    depends_on:
+      - search_service
+
+  log_processor:
+    image: docker.elastic.co/beats/filebeat:8.14.0
+    container_name: log_processor
+    entrypoint: "filebeat -e -strict.perms=false"
+    volumes:
+      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      # - "/path/to/local/downloads:/mnt/network_drive"
+      # - "//network_share/remote_drive:/mnt/network_drive"
+      # - "I:/Downloads/SpecificDirectory:/mnt/network_drive"
+      - "/path/to/local/network_symlink:/mnt/network_drive"
+      # - "/mnt/i_drive/Downloads/Directory:/mnt/network_drive"
+      - filebeat-data:/var/lib/filebeat
+    depends_on:
+      - search_service
+
+volumes:
+  esdata:
+    driver: local
+  filebeat-data:
+    driver: local
